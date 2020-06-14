@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>중간고사 대체 과제</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, maximum-scale=1.0">
+		<style>
+			body {
+				margin: 0px;
+				background-color: #000000;
+				overflow: hidden;			
+			}
+		</style>
+	</head>
+	<body>
+		<script src="three.js"></script>
+		<script src="OrbitControls.js"></script>
+		<script src="dat.gui.min.js"></script>
+		<script src="objloader.js"></script>
+		<script src="MTLLoader.js"></script>
+		<script>
+			var controls;
+			var camera, scene, renderer;
+			var earth, sun, moon, mars, jupiter, mercury, venus, uranus, neptune;
+			var saturn = new Object();
+			var satellite = new Object();
+			var rocket = new Object();
+			var params;
+			var light;
+			var light2;
+			var background;
+			const PI_PER_180 = Math.PI / 180;
+			var x_earth, z_earth;
+			var saturn_material, saturn_texture;
+			var satellite_material, satellite_texture;
+
+			init();
+			animate();
+			
+			function init() {
+				camera = new THREE.PerspectiveCamera( 70, window.innerWidth/window.innerHeight, 1, 20000 ); // 카메라 기능
+				camera.position.z = 400;
+				scene = new THREE.Scene();
+				
+				light = new THREE.PointLight(0xffffff); // 원점을 기준을 빛을 비추는 기능
+				light.position.set(0,0,0); 
+				light.intensity = 2;
+				scene.add(light); // light를 장면에 추가
+				
+				light2 = new THREE.AmbientLight(0xaaaaaa); // 전체적으로 모든 오브젝트를 동일하게 비추는 빛
+				light2.position.set(0,0,0);
+				scene.add(light2); // light2를 장면에 추가 
+				
+				var axisHelper = new THREE.AxisHelper(200);
+				scene.add(axisHelper);
+				
+				// 태양
+				var texture = new THREE.TextureLoader().load('2k_sun.jpg'); // 태양의 질감 
+				
+				var geometry = new THREE.SphereGeometry(200, 32, 16); // 태양의 형태(원)
+				
+				material = new THREE.MeshPhongMaterial({map: texture}); 
+				sun = new THREE.Mesh(geometry, material);
+				scene.add(sun); // 태양을 장면에 추가
+				
+				// 수성
+				var texture = new THREE.TextureLoader().load('Mercury.jpg');
+				
+				var geometry = new THREE.SphereGeometry(3.8, 32, 16);
+				
+				material = new THREE.MeshPhongMaterial({map: texture});
+				mercury = new THREE.Mesh(geometry, material);
+				scene.add(mercury);
+				
+				// 금성
+				var texture = new THREE.TextureLoader().load('Venus.jpg');
+				
+				var geometry = new THREE.SphereGeometry(9.5, 32, 16);
+				
+				material = new THREE.MeshPhongMaterial({map: texture});
+				venus = new THREE.Mesh(geometry, material);
+				scene.add(venus);
+				
+				// 지구
+				var texture = new THREE.TextureLoader().load('Color_Map.jpg');
+				
+				var geometry = new THREE.SphereGeometry(10, 32, 16);
+				
+				material = new THREE.MeshPhongMaterial({map: texture});
+				earth = new THREE.Mesh(geometry, material);
+				scene.add(earth);
+				
+				// 달
+				var texture = new THREE.TextureLoader().load('Moon.jpg');
+				
+				var geometry = new THREE.SphereGeometry(2.72, 32, 16);
+				
+				material = new THREE.MeshPhongMaterial({map: texture});
+				moon = new THREE.Mesh(geometry, material);
+
+				scene.add(moon);
+				
+				// 화성
+				var texture = new THREE.TextureLoader().load('Mars.jpg');
+				
+				var geometry = new THREE.SphereGeometry(5.32, 32, 16);
+				
+				material = new THREE.MeshPhongMaterial({map: texture});
+				mars = new THREE.Mesh(geometry, material);
+				scene.add(mars);
+				
+				// 목성
+				var texture = new THREE.TextureLoader().load('Jupiter.jpg');
+				
+				var geometry = new THREE.SphereGeometry(109.73, 32, 16);
+				
+				material = new THREE.MeshPhongMaterial({map: texture});
+				jupiter = new THREE.Mesh(geometry, material);
+				scene.add(jupiter);
+				
+				// 토성
+				var loader = new THREE.OBJLoader; // OBJLoader 기능을 불러와 loader 변수에 저장
+				saturn_material = new THREE.MeshStandardMaterial; // MeshStandardMaterial 기능(질감)을 불러와 saturn_material 저장
+				saturn_texture = new THREE.TextureLoader().load('Saturn.jpg'); //TextureLoader 기능을 이용해 사진 파일을 saturn_texture 저장
+				
+				saturn_material.map = saturn_texture; // 질감의 기본 맵 Saturn.jpg
+				
+				loader.load('Saturn.obj', function(object){ // 'Saturn.obj' 콜백 
+
+					saturn.object = object; 
+					scene.add(object); // object값 장면에 추가
+
+					object.traverse(function(body){
+						if(body instanceof THREE.Mesh){ // 객체에 해당하는 Mesh 기능 body로 복제
+							body.material = saturn_material; // 저장되어있던 질감을 body에 저장
+							body.scale.set(0.4,0.4,0.4); // 토성의 크기
+							saturn.body = body;
+							body.rotation.x =  Math.PI / 2; // 토성의 회전축 변경 
+							scene.add(body); // body 값 장면에 추가
+						}
+					})
+				});
+				
+				// 천왕성
+				var texture = new THREE.TextureLoader().load('Uranus.jpg');
+				
+				var geometry = new THREE.SphereGeometry(39.8, 32, 16);
+				
+				material = new THREE.MeshPhongMaterial({map: texture});
+				uranus = new THREE.Mesh(geometry, material);
+				scene.add(uranus);
+				
+				// 해왕성
+				var texture = new THREE.TextureLoader().load('Neptune.jpg');
+				
+				var geometry = new THREE.SphereGeometry(38.6, 32, 16);
+				
+				material = new THREE.MeshPhongMaterial({map: texture});
+				neptune = new THREE.Mesh(geometry, material);
+				scene.add(neptune);
+				
+				// 우주 정거장
+				var loader = new THREE.OBJLoader;
+				satellite_material = new THREE.MeshStandardMaterial;
+				satellite_texture = new THREE.TextureLoader().load('Satellite.jpg');
+				
+				satellite_material.map = satellite_texture;
+				
+				loader.load('Satellite.obj', function(object){
+
+					satellite.object = object;
+					scene.add(object);
+
+					object.traverse(function(body){
+						if(body instanceof THREE.Mesh){
+							body.material = satellite_material;
+							body.scale.set(0.005,0.005,0.005);
+							satellite.body = body;
+							scene.add(body);
+						}
+					})
+				});
+				
+				var texture = new THREE.TextureLoader().load('space2.jpg'); // 배경화면에 대한 사진 질감
+				var geometry = new THREE.BoxBufferGeometry(20000, 20000, 20000); // 정육면체 형태의 background
+				var material = new THREE.MeshBasicMaterial({map: texture, side: THREE.DoubleSide}); 
+				
+				background = new THREE.Mesh(geometry, material);
+				scene.add(background); // 배경 화면 장면에 추가
+				
+				renderer = new THREE.WebGLRenderer(); // 랜더러 (2차원, 3차원 장면을 보여주는 기능)
+				
+				renderer.setClearColor(0xa0a0a0);
+				renderer.setPixelRatio(window.devicePixelRatio);
+				renderer.setSize(window.innerWidth, window.innerHeight);
+				document.body.appendChild(renderer.domElement);
+				
+				controls = new THREE.OrbitControls(camera, renderer.domElement); // 컨트롤(마으스로 물체를 조작하는 기능)
+				
+				window.addEventListener('resize', onWindowResize, false);
+				
+				params = {intensity: 2}; // (태양 빛을 비추는 기능 기준: 2)
+				var gui = new dat.GUI();
+				
+				gui.add(params, 'intensity', 0, 6); // 0~6까지 가능
+				gui.open();
+			}
+			
+			function onWindowResize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				
+				renderer.setSize(window.innerWidth, window.innerHeight);
+			}
+			
+			
+			function animate() {
+				requestAnimationFrame(animate);
+				light2.intensity = params.intensity;
+				
+				mercury.rotation.y = 365*Date.now()*0.00000017; // 수성의 자전
+				mercury.position.x = 250 * Math.sin(Date.now()*0.000159); // 수성의 공전
+				mercury.position.z = 250 * Math.cos(Date.now()*0.000159); // 수성의 공전
+				
+				venus.rotation.y = 365*Date.now()*0.0000007; // 금성의 자전
+				venus.position.x = 467.1 * Math.sin(Date.now()*0.000117); // 금성의 공전
+				venus.position.z = 467.1 * Math.cos(Date.now()*0.000117); // 금성의 공전
+				
+				earth.rotation.y = 365*Date.now()*0.0001; // 지구의 자전
+				x_earth = earth.position.x = 645.9 * Math.sin(Date.now()*0.0001); // 지구의 공전
+				z_earth = earth.position.z = 645.9 * Math.cos(Date.now()*0.0001); // 지구의 공전
+				
+				moon.position.x = 660.9 * Math.sin(Date.now()*0.0001); // 달의 공전
+				moon.position.z = 660.9 * Math.cos(Date.now()*0.0001); // 달의 공전
+				
+				mars.rotation.y = 365*Date.now()*0.0001; // 화성의 자전
+				mars.position.x = 984 * Math.sin(Date.now()*0.00008); // 화성의 공전
+				mars.position.z = 984 * Math.cos(Date.now()*0.00008); // 화성의 공전
+				
+				jupiter.rotation.y = 365*Date.now()*0.00024; // 목성의 자전
+				jupiter.position.x = 1300 * Math.sin(Date.now()*0.000043); // 목성의 공전
+				jupiter.position.z = 1300 * Math.cos(Date.now()*0.000043); // 목성의 공전
+				
+				saturn.object.rotation.y = 365*Date.now()*0.00025; // 목성의 자전
+				saturn.body.rotation.y = 365*Date.now()*0.00025; // 목성의 자전
+				saturn.object.position.x = 1800 * Math.sin(Date.now()*0.000032); // 토성의 공전
+				saturn.object.position.z = 1800 * Math.cos(Date.now()*0.000032);
+				saturn.body.position.x = 1800 * Math.sin(Date.now()*0.000032);
+				saturn.body.position.z = 1800 * Math.cos(Date.now()*0.000032);
+				
+				uranus.rotation.y = 365*Date.now()*0.00014; // 천왕성의 자전
+				uranus.position.x = 2600 * Math.sin(Date.now()*0.000023); // 천왕성의 공전
+				uranus.position.z = 2600 * Math.cos(Date.now()*0.000023);
+				
+				neptune.rotation.y = 365*Date.now()*0.00013; // 해왕성의 자전
+				neptune.position.x = 3500 * Math.sin(Date.now()*0.000023); // 해왕성의 공전
+				neptune.position.z = 3500 * Math.cos(Date.now()*0.000023);
+				
+				satellite.object.position.x = 600 * Math.sin(Date.now()*0.0001); // 우주정거장의 공전
+				satellite.object.position.z = 600 * Math.cos(Date.now()*0.0001);
+				satellite.body.position.x = 600 * Math.sin(Date.now()*0.0001);
+				satellite.body.position.z = 600 * Math.cos(Date.now()*0.0001);
+				
+				renderer.render(scene, camera);
+				
+				controls.update();
+			}
+		</script>
+	</body>
+</html>
